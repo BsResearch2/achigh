@@ -190,8 +190,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update the engagement score display
     function updateEngagementScore(delta, usesRecommendedHashtags) {
-        engagementScore = Math.min(5, engagementScore + delta); // Cap at 5
-        engagementScoreElement.textContent = `Engagement Score: ${engagementScore.toFixed(1)}`;
+        if (usesRecommendedHashtags) {
+            engagementScore = Math.min(5, engagementScore + delta); // Cap at 5 if hashtags are used
+        } else {
+            engagementScore = Math.min(1.3, engagementScore + delta); // Cap at 1.5 if hashtags are not used
+        }
+
+        engagementScoreElement.textContent = usesRecommendedHashtags
+            ? `Great job! Your engagement score increased to ${engagementScore.toFixed(1)}/5. Keep using recommended hashtags to boost engagement!`
+            : `You received a low engagement score of ${engagementScore.toFixed(1)}/5 because you didn't use the platform-recommended hashtags.`;
+        engagementScoreElement.className = usesRecommendedHashtags ? 'success' : 'error';
     }
 
     // Update the total revenue earned

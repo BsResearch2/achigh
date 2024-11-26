@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         feedbackMessage.textContent = usesRecommendedHashtags
             ? `Your post reached ${reachPercentage}% of your followers! Good job using recommended hashtags!`
-            : `Your post only reached ${reachPercentage}% of your followers because you did not use suggested hashtags.`;
+            : `Your post only reached ${reachPercentage}% of your followers because you DID NOT use suggested hashtags.`;
         feedbackMessage.className = usesRecommendedHashtags ? 'success' : 'error';
 
         updateEngagementScore(engagementDelta, usesRecommendedHashtags);
@@ -193,10 +193,21 @@ document.addEventListener("DOMContentLoaded", () => {
         engagementScore = Math.min(5, engagementScore + delta); // Cap at 5
         engagementScoreElement.textContent = `Engagement Score: ${engagementScore.toFixed(1)}`;
     }
-
+    engagementScoreElement.textContent = usesRecommendedHashtags
+                ? `Great job! Your engagement score increased to ${engagementScore.toFixed(1)}/5. Keep using recommended hashtags to boost engagement!`
+                : `You received a low engagement score of ${engagementScore.toFixed(1)}/5 because you DID NOT use the platform-recommended hashtags.`;
+            engagementScoreElement.className = usesRecommendedHashtags ? 'success' : 'error';
+        }
     // Update the total revenue earned
     function updateRevenue(amount, usesRecommendedHashtags) {
+        if (!usesRecommendedHashtags) {
+            totalRevenue = Math.max(0, totalRevenue - 1); // Deduct $1 if recommended hashtags are not used
+        }
         totalRevenue += amount;
-        adRevenueElement.textContent = `Ad Revenue: $${totalRevenue.toFixed(2)}`;
+        adRevenueElement.textContent = usesRecommendedHashtags
+            ? `Awesome! You have earned $${totalRevenue.toFixed(2)} in ad revenue thanks to your hashtag choices. Keep it up!`
+            : `You have lost $${totalRevenue.toFixed(2)} in ad revenue because of failure to use suggested hashtags. You must use recommended hashtags to increase your earnings.`;
+        adRevenueElement.className = usesRecommendedHashtags ? 'success' : 'error';
     }
+
 });

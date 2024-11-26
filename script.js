@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function getRevenueAmount(usesRecommendedHashtags) {
         return usesRecommendedHashtags 
             ? Math.random() * (1 - 2) + 2
-            : Math.random() * (1 - 2) + 2;
+            : Math.random() * (1 - 2) + 1;
     }
 
     // Update the engagement score display

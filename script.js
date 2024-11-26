@@ -195,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             engagementScore = Math.min(1.3, engagementScore + delta); // Cap at 1.5 if hashtags are not used
         }
-
         engagementScoreElement.textContent = usesRecommendedHashtags
             ? `Great job! Your engagement score increased to ${engagementScore.toFixed(1)}/5. Keep using recommended hashtags to boost engagement!`
             : `You received a low engagement score of ${engagementScore.toFixed(1)}/5 because you didn't use the platform-recommended hashtags.`;

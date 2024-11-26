@@ -1,3 +1,7 @@
+// Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     const postFeed = document.getElementById('post-feed');
     const submitPostBtn = document.getElementById('submit-post');
@@ -19,6 +23,21 @@ document.addEventListener("DOMContentLoaded", () => {
         '#grateful', '#workhardplayhard', '#fitfam', '#bodygoals', 
         '#successmindset', '#girlboss', '#bossbabe', '#luxurylife', '#adulting'
     ];
+    
+    // Firebase configuration
+    const firebaseConfig = {
+    apiKey: "AIzaSyBf3w3osCrlXqIRhbAcRFpYkg-JAVWCidQ",
+    authDomain: "ac-experiment.firebaseapp.com",
+    projectId: "ac-experiment",
+    storageBucket: "ac-experiment.firebasestorage.app",
+    messagingSenderId: "83447059204",
+    appId: "1:83447059204:web:c1d18e7d50ee80e673f651",
+    measurementId: "G-1BYENTEQ7Z"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     // Enable/disable post button based on content input
     postContent.addEventListener('input', () => {
@@ -30,17 +49,24 @@ document.addEventListener("DOMContentLoaded", () => {
         submitRevisionBtn.disabled = revisionContent.value.trim() === '';
     });
 
-    // Initial Post Submission Logic
-    submitPostBtn.addEventListener('click', () => {
+        // Unified `click` event listener for the "Post" button
+    submitPostBtn.addEventListener('click', async () => {
         const content = postContent.value.trim();
-        const usesRecommendedHashtags = checkHashtagCount(content);
+        console.log("Post button clicked. Content:", content); // Debugging log
 
         if (content) {
+            // Save the post to Firebase
+            await savePostToFirebase(content, "initial");
+
+            // Check hashtags and simulate algorithm behavior
+            const usesRecommendedHashtags = checkHashtagCount(content);
             simulateAlgorithm(content, usesRecommendedHashtags);
+
+            // Clear input, disable button, and show revision section
             postContent.value = '';
             submitPostBtn.disabled = true;
             revisionSection.classList.remove('hidden'); // Show the revision section
-            localStorage.setItem('currentPost', content); // Store initial post temporarily
+            localStorage.setItem('currentPost', content); // Store initial post for revision
         } else {
             alert('Please write something before posting!');
         }
@@ -105,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         URL.revokeObjectURL(url); // Clean up the URL
     });
+
 
     // Simulate algorithm behavior based on hashtag usage
     function simulateAlgorithm(content, usesRecommendedHashtags) {
@@ -180,4 +207,15 @@ document.addEventListener("DOMContentLoaded", () => {
             : `You have lost $${totalRevenue.toFixed(2)} in ad revenue because of failure to use suggested hashtags. You must use recommended hashtags to increase your earnings.`;
         adRevenueElement.className = usesRecommendedHashtags ? 'success' : 'error';
     }
+
+    // Save post to Firestore
+    async function savePost(content) {
+        try {
+            await addDoc(collection(db, "posts"), { content, timestamp: new Date() });
+            console.log("Post saved successfully!");
+        } catch (error) {
+            console.error("Error saving post: ", error);
+        }
+    }
+    
 });

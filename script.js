@@ -3,6 +3,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("JavaScript loaded and running");
+
+    // Get DOM elements
     const postFeed = document.getElementById('post-feed');
     const submitPostBtn = document.getElementById('submit-post');
     const postContent = document.getElementById('post-content');
@@ -23,40 +26,53 @@ document.addEventListener("DOMContentLoaded", () => {
         '#grateful', '#workhardplayhard', '#fitfam', '#bodygoals', 
         '#successmindset', '#girlboss', '#bossbabe', '#luxurylife', '#adulting'
     ];
-    
+
     // Firebase configuration
     const firebaseConfig = {
-    apiKey: "AIzaSyBf3w3osCrlXqIRhbAcRFpYkg-JAVWCidQ",
-    authDomain: "ac-experiment.firebaseapp.com",
-    projectId: "ac-experiment",
-    storageBucket: "ac-experiment.firebasestorage.app",
-    messagingSenderId: "83447059204",
-    appId: "1:83447059204:web:c1d18e7d50ee80e673f651",
-    measurementId: "G-1BYENTEQ7Z"
+        apiKey: "AIzaSyBf3w3osCrlXqIRhbAcRFpYkg-JAVWCidQ",
+        authDomain: "ac-experiment.firebaseapp.com",
+        projectId: "ac-experiment",
+        storageBucket: "ac-experiment.firebasestorage.app",
+        messagingSenderId: "83447059204",
+        appId: "1:83447059204:web:c1d18e7d50ee80e673f651",
+        measurementId: "G-1BYENTEQ7Z"
     };
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    console.log("Firebase initialized successfully");
+
     // Enable/disable post button based on content input
     postContent.addEventListener('input', () => {
+        console.log("Textarea input:", postContent.value.trim());
         submitPostBtn.disabled = postContent.value.trim() === '';
+        console.log("Submit button disabled:", submitPostBtn.disabled);
     });
 
     // Enable/disable revision button based on content input
     revisionContent.addEventListener('input', () => {
+        console.log("Revision textarea input:", revisionContent.value.trim());
         submitRevisionBtn.disabled = revisionContent.value.trim() === '';
+        console.log("Revision button disabled:", submitRevisionBtn.disabled);
     });
 
-        // Unified `click` event listener for the "Post" button
+    // Unified `click` event listener for the "Post" button
     submitPostBtn.addEventListener('click', async () => {
         const content = postContent.value.trim();
-        console.log("Post button clicked. Content:", content); // Debugging log
+        console.log("Post button clicked. Content:", content);
 
         if (content) {
             // Save the post to Firebase
-            await savePostToFirebase(content, "initial");
+            try {
+                await addDoc(collection(db, "posts"), { content, type: "initial", timestamp: new Date() });
+                console.log("Post saved to Firebase successfully");
+            } catch (error) {
+                console.error("Error saving post to Firebase:", error);
+                alert("Failed to save post. Please try again.");
+                return;
+            }
 
             // Check hashtags and simulate algorithm behavior
             const usesRecommendedHashtags = checkHashtagCount(content);
@@ -72,6 +88,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Submit revision logic
+    submitRevisionBtn.addEventListener('click', async () => {
+        const revisedContent = revisionContent.value.trim();
+        const originalContent = localStorage.getItem('currentPost'); // Retrieve the initial post
+        console.log("Submit revision clicked. Revised content:", revisedContent);
+
+        if (originalContent && revisedContent) {
+            try {
+                await addDoc(collection(db, "posts"), { content: revisedContent, type: "revised", timestamp: new Date() });
+                console.log("Revised post saved to Firebase successfully");
+            } catch (error) {
+                console.error("Error saving revised post to Firebase:", error);
+                alert("Failed to save revised post. Please try again.");
+                return;
+            }
+
+            // Save revised post locally
+            const uniqueId = generateUniqueId(); // Generate a unique ID
+            savePostPair(originalContent, revisedContent, uniqueId); // Save both as a pair locally
+
+            // Clear revision input and disable revision button
+            revisionContent.value = '';
+            submitRevisionBtn.disabled = true;
+            revisionSection.classList.add('hidden'); // Hide the revision section
+            alert('Revised post saved successfully!');
+        } else {
+            alert('Please revise your post before submitting!');
+        }
+    });
+
     // Check if at least three recommended hashtags are used
     function checkHashtagCount(content) {
         let hashtagCount = 0;
@@ -83,56 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return hashtagCount >= 3; // Returns true if at least 3 hashtags are used
     }
 
-    // Revised Post Submission Logic
-    submitRevisionBtn.addEventListener('click', () => {
-        const revisedContent = revisionContent.value.trim();
-        const originalContent = localStorage.getItem('currentPost'); // Retrieve the initial post
-
-        if (originalContent && revisedContent) {
-            const uniqueId = generateUniqueId(); // Generate a unique ID
-            savePostPair(originalContent, revisedContent, uniqueId); // Save both as a pair
-            revisionContent.value = ''; // Clear revision input
-            submitRevisionBtn.disabled = true; // Disable revision button
-            revisionSection.classList.add('hidden'); // Hide revision section
-        } else {
-            alert('Please revise your post before submitting!');
-        }
-    });
-
-    // Save original and revised posts as a pair with a unique ID
-    function savePostPair(original, revised, id) {
-        let postPairs = JSON.parse(localStorage.getItem("postPairs")) || [];
-        postPairs.push({ id, original, revised }); // Add ID to each post pair
-        localStorage.setItem("postPairs", JSON.stringify(postPairs));
-        localStorage.removeItem('currentPost'); // Clear temporary storage
-    }
-
-    // Generate a unique identifier (using timestamp + random number for simplicity)
-    function generateUniqueId() {
-        return `id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    }
-
-    // Download post pairs as a JSON file
-    downloadButton.addEventListener("click", () => {
-        const postPairs = JSON.parse(localStorage.getItem("postPairs")) || [];
-        if (postPairs.length === 0) {
-            alert("No data to download.");
-            return;
-        }
-
-        const dataStr = JSON.stringify(postPairs, null, 2); // Convert to JSON string
-        const blob = new Blob([dataStr], { type: "application/json" }); // Create a Blob object
-        const url = URL.createObjectURL(blob); // Create a URL for the blob
-
-        const a = document.createElement("a"); // Create a temporary link element
-        a.href = url;
-        a.download = "postData.json"; // Set the download file name
-        a.click(); // Trigger the download
-
-        URL.revokeObjectURL(url); // Clean up the URL
-    });
-
-
     // Simulate algorithm behavior based on hashtag usage
     function simulateAlgorithm(content, usesRecommendedHashtags) {
         const reachPercentage = getReach(usesRecommendedHashtags);
@@ -143,13 +139,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         feedbackMessage.textContent = usesRecommendedHashtags
             ? `Your post reached ${reachPercentage}% of your followers! Good job using recommended hashtags!`
-            : `Your post only reached ${reachPercentage}% of your followers because you did not use suggested hashtags. You have to use recommended hashtags to reach a larger audience.`;
+            : `Your post only reached ${reachPercentage}% of your followers because you did not use suggested hashtags.`;
         feedbackMessage.className = usesRecommendedHashtags ? 'success' : 'error';
 
         updateEngagementScore(engagementDelta, usesRecommendedHashtags);
         updateRevenue(revenueAmount, usesRecommendedHashtags);
-
-        revisionSection.classList.remove('hidden');
     }
 
     // Display the post in the feed
@@ -158,6 +152,19 @@ document.addEventListener("DOMContentLoaded", () => {
         post.classList.add('post');
         post.innerHTML = `<p>${content}</p>`;
         postFeed.prepend(post);
+    }
+
+    // Save original and revised posts as a pair with a unique ID locally
+    function savePostPair(original, revised, id) {
+        let postPairs = JSON.parse(localStorage.getItem("postPairs")) || [];
+        postPairs.push({ id, original, revised }); // Add ID to each post pair
+        localStorage.setItem("postPairs", JSON.stringify(postPairs));
+        localStorage.removeItem('currentPost'); // Clear temporary storage
+    }
+
+    // Generate a unique identifier (using timestamp + random number for simplicity)
+    function generateUniqueId() {
+        return `id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
 
     // Calculate reach based on hashtag usage
@@ -176,46 +183,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Calculate revenue based on hashtag usage
     function getRevenueAmount(usesRecommendedHashtags) {
-        const revenue = usesRecommendedHashtags 
+        return usesRecommendedHashtags 
             ? Math.random() * (1 - 2) + 2
             : Math.random() * (1 - 2) + 2;
-        return revenue;
     }
 
-    // Update the engagement score display with conditional messaging
+    // Update the engagement score display
     function updateEngagementScore(delta, usesRecommendedHashtags) {
-        if (usesRecommendedHashtags) {
-            engagementScore = Math.min(5, engagementScore + delta); // Cap at 5 if hashtags are used
-        } else {
-            engagementScore = Math.min(1.3, engagementScore + delta); // Cap at 1.5 if hashtags are not used
-        }
-
-        engagementScoreElement.textContent = usesRecommendedHashtags
-            ? `Great job! Your engagement score increased to ${engagementScore.toFixed(1)}/5. Keep using recommended hashtags to boost engagement!`
-            : `You received a low engagement score of ${engagementScore.toFixed(1)}/5 because you didn't use the platform-recommended hashtags.`;
-        engagementScoreElement.className = usesRecommendedHashtags ? 'success' : 'error';
+        engagementScore = Math.min(5, engagementScore + delta); // Cap at 5
+        engagementScoreElement.textContent = `Engagement Score: ${engagementScore.toFixed(1)}`;
     }
 
-    // Update the total revenue earned with conditional messaging
+    // Update the total revenue earned
     function updateRevenue(amount, usesRecommendedHashtags) {
-        if (!usesRecommendedHashtags) {
-            totalRevenue = Math.max(0, totalRevenue - 1); // Deduct $1 if recommended hashtags are not used
-        }
         totalRevenue += amount;
-        adRevenueElement.textContent = usesRecommendedHashtags
-            ? `Awesome! You have earned $${totalRevenue.toFixed(2)} in ad revenue thanks to your hashtag choices. Keep it up!`
-            : `You have lost $${totalRevenue.toFixed(2)} in ad revenue because of failure to use suggested hashtags. You must use recommended hashtags to increase your earnings.`;
-        adRevenueElement.className = usesRecommendedHashtags ? 'success' : 'error';
+        adRevenueElement.textContent = `Ad Revenue: $${totalRevenue.toFixed(2)}`;
     }
-
-    // Save post to Firestore
-    async function savePost(content) {
-        try {
-            await addDoc(collection(db, "posts"), { content, timestamp: new Date() });
-            console.log("Post saved successfully!");
-        } catch (error) {
-            console.error("Error saving post: ", error);
-        }
-    }
-    
 });

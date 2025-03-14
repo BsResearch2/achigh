@@ -1,4 +1,3 @@
-// Import Firebase modules
 document.addEventListener("DOMContentLoaded", () => {
     console.log("JavaScript loaded and running");
 
@@ -65,15 +64,24 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Submit revision clicked. Revised content:", revisedContent);
 
         if (originalContent && revisedContent) {
+            // Highlight revised parts
+            const highlightedRevisions = highlightRevisions(originalContent, revisedContent);
+
             // Save revised post locally
             const uniqueId = generateUniqueId(); // Generate a unique ID
             savePostPair(originalContent, revisedContent, uniqueId); // Save both as a pair locally
+
+            // Display the revised post with highlights
+            displayPost(highlightedRevisions);
 
             // Clear revision input and disable revision button
             revisionContent.value = '';
             submitRevisionBtn.disabled = true;
             revisionSection.classList.add('hidden'); // Hide the revision section
-            alert('Revised post saved successfully!');
+            feedbackMessage.classList.remove('hidden'); // Show feedback message
+            feedbackMessage.textContent = "The algorithm has analyzed your revisions and updated your post reach and engagement scores."; // Display feedback message
+
+            localStorage.removeItem('currentPost'); // Clear temporary storage
         } else {
             alert('Please revise your post before submitting!');
         }
@@ -113,6 +121,22 @@ document.addEventListener("DOMContentLoaded", () => {
         post.classList.add('post');
         post.innerHTML = `<p>${content}</p>`;
         postFeed.prepend(post);
+    }
+
+    // Highlight revisions in the post content
+    function highlightRevisions(original, revised) {
+        const originalWords = original.split(' ');
+        const revisedWords = revised.split(' ');
+        let highlightedContent = '';
+
+        for (let i = 0; i < revisedWords.length; i++) {
+            if (originalWords[i] !== revisedWords[i]) {
+                highlightedContent += `<span class="highlight">${revisedWords[i]}</span> `;
+            } else {
+                highlightedContent += `${revisedWords[i]} `;
+            }
+        }
+        return highlightedContent.trim();
     }
 
     // Save original and revised posts as a pair with a unique ID locally

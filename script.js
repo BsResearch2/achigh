@@ -85,15 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Display feedback message based on hashtag usage in revisions
             if (usesRecommendedHashtags) {
-                feedbackMessage.textContent = "The algorithm has analyzed your revisions and found that you have incorporated the recommended hashtags. Your post reach and engagement scores have improved!";
+                feedbackMessage.innerHTML = `
+                    <p>Percentage Reach: Your post reached 14% of your followers! Good job using recommended hashtags!</p>
+                    <p>Engagement Score: Great job! Your engagement score increased to 4.5/5. Keep using recommended hashtags to boost engagement!</p>
+                    <p>Ad Revenue: Awesome! You have earned $1.85 in ad revenue thanks to your hashtag choices. Keep it up!</p>
+                `;
                 feedbackMessage.className = 'success';
-                updateEngagementScore(getEngagementDelta(true), true);
-                updateRevenue(getRevenueAmount(true), true);
             } else {
                 feedbackMessage.textContent = "The algorithm has analyzed your revisions. However, you did not incorporate the recommended hashtags, so your post reach and engagement scores remain the same.";
                 feedbackMessage.className = 'error';
-                updateEngagementScore(getEngagementDelta(false), false);
-                updateRevenue(getRevenueAmount(false), false);
             }
 
             localStorage.removeItem('currentPost'); // Clear temporary storage

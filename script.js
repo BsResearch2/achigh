@@ -84,10 +84,17 @@ document.addEventListener("DOMContentLoaded", () => {
             feedbackMessage.classList.remove('hidden'); // Show feedback message
 
             // Display feedback message based on hashtag usage in revisions
-            feedbackMessage.textContent = usesRecommendedHashtags
-                ? "The algorithm has analyzed your revisions and found that you have incorporated the recommended hashtags. Your post reach and engagement scores have improved!"
-                : "The algorithm has analyzed your revisions. However, you did not incorporate the recommended hashtags, so your post reach and engagement scores remain the same.";
-            feedbackMessage.className = usesRecommendedHashtags ? 'success' : 'error';
+            if (usesRecommendedHashtags) {
+                feedbackMessage.textContent = "The algorithm has analyzed your revisions and found that you have incorporated the recommended hashtags. Your post reach and engagement scores have improved!";
+                feedbackMessage.className = 'success';
+                updateEngagementScore(getEngagementDelta(true), true);
+                updateRevenue(getRevenueAmount(true), true);
+            } else {
+                feedbackMessage.textContent = "The algorithm has analyzed your revisions. However, you did not incorporate the recommended hashtags, so your post reach and engagement scores remain the same.";
+                feedbackMessage.className = 'error';
+                updateEngagementScore(getEngagementDelta(false), false);
+                updateRevenue(getRevenueAmount(false), false);
+            }
 
             localStorage.removeItem('currentPost'); // Clear temporary storage
         } else {

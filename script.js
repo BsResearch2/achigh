@@ -67,6 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Highlight revised parts
             const highlightedRevisions = highlightRevisions(originalContent, revisedContent);
 
+            // Check hashtags in the revised content
+            const usesRecommendedHashtags = checkHashtagCount(revisedContent);
+
             // Save revised post locally
             const uniqueId = generateUniqueId(); // Generate a unique ID
             savePostPair(originalContent, revisedContent, uniqueId); // Save both as a pair locally
@@ -79,7 +82,12 @@ document.addEventListener("DOMContentLoaded", () => {
             submitRevisionBtn.disabled = true;
             revisionSection.classList.add('hidden'); // Hide the revision section
             feedbackMessage.classList.remove('hidden'); // Show feedback message
-            feedbackMessage.textContent = "The algorithm has analyzed your revisions and updated your post reach and engagement scores."; // Display feedback message
+
+            // Display feedback message based on hashtag usage in revisions
+            feedbackMessage.textContent = usesRecommendedHashtags
+                ? "The algorithm has analyzed your revisions and found that you have incorporated the recommended hashtags. Your post reach and engagement scores have improved!"
+                : "The algorithm has analyzed your revisions. However, you did not incorporate the recommended hashtags, so your post reach and engagement scores remain the same.";
+            feedbackMessage.className = usesRecommendedHashtags ? 'success' : 'error';
 
             localStorage.removeItem('currentPost'); // Clear temporary storage
         } else {
